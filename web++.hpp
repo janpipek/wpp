@@ -538,6 +538,8 @@ namespace WPP {
             ssize_t t;
             t = write(newsc, header_buffer, strlen(header_buffer));
             t = write(newsc, body.c_str(), body_len);
+            
+            close(newsc);
         }
     }
 
