@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -296,7 +297,7 @@ namespace WPP {
             bool start(int);
             bool start();
         private:
-            void* main_loop(void*);
+            void* main_loop(void*, string="0.0.0.0");
             void parse_headers(char*, Request*, Response*);
             bool match_route(Request*, Response*);
             string trim(string);
@@ -469,7 +470,7 @@ namespace WPP {
         return false;
     }
 
-    void* Server::main_loop(void* arg) {
+    void* Server::main_loop(void* arg, string host) {
         int* port = reinterpret_cast<int*>(arg);
 
         int newsc;
@@ -484,6 +485,8 @@ namespace WPP {
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = INADDR_ANY;
         serv_addr.sin_port = htons(*port);
+
+        inet_aton(host.c_str(), &serv_addr.sin_addr);
 
         if (::bind(sc, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) {
             throw WPP::Exception("ERROR on binding");
@@ -541,7 +544,6 @@ namespace WPP {
             ssize_t t;
             t = write(newsc, header_buffer, strlen(header_buffer));
             t = write(newsc, body.c_str(), body_len);
-            
             close(newsc);
         }
     }
@@ -554,8 +556,7 @@ namespace WPP {
 //              assert (rc == 0);
 //         }
 
-        this->main_loop(&port);
-
+        this->main_loop(&port, host);
         return true;
     }
 
